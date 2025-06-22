@@ -15,7 +15,7 @@
     "@tanstack/react-query": "^5.80.7",
     "axios": "^1.10.0",
     "jszip": "^3.10.1",
-    "lucide-react": "^0.344.0",
+    "lucide-react": "^0.522.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "three": "^0.176.0"
