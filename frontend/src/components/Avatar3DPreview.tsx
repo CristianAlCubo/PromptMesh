@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { ArrowLeft, Check, Loader2, RotateCw } from 'lucide-react';
-import ModelViewer from './ModelViewer';
+import { GLBViewer } from './GLBViewer';
 
 interface Avatar3DPreviewProps {
   avatarData: { description: string; selectedImage: string } | null;
@@ -52,7 +52,7 @@ const Avatar3DPreview: React.FC<Avatar3DPreviewProps> = ({ avatarData, onConfirm
                   </div>
                 ) : (
                   <div className="h-full">
-                    <ModelViewer objUrl={meshUrl || null} />
+                    {meshUrl && <GLBViewer url={meshUrl} />}
                   </div>
                 )}
               </div>

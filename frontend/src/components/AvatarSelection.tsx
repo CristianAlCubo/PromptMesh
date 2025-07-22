@@ -1,20 +1,25 @@
-import React from 'react';
-import { ArrowLeft, Plus, Sparkles } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { ArrowLeft, Sparkles, UserCheck } from 'lucide-react';
 import type { Avatar } from '../App';
+import { useCustomAvatar } from '../hooks/useCustomAvatar';
 
 interface AvatarSelectionProps {
   onAvatarSelect: (avatar: Avatar) => void;
   onCreateCustomAvatar: () => void;
   customAvatars: Avatar[];
   onBackToLanding: () => void;
+  onUploadCustomAvatar: () => void;
 }
 
 const AvatarSelection: React.FC<AvatarSelectionProps> = ({
   onAvatarSelect,
   onCreateCustomAvatar,
   customAvatars,
-  onBackToLanding
+  onBackToLanding,
+  onUploadCustomAvatar
 }) => {
+  const { avatar: customAvatar, isLoading } = useCustomAvatar();
+
   const predefinedAvatars: Avatar[] = [
     {
       id: 'preset-1',
@@ -54,7 +59,21 @@ const AvatarSelection: React.FC<AvatarSelectionProps> = ({
     }
   ];
 
-  const allAvatars = [...predefinedAvatars, ...customAvatars];
+  const customAvatarForSelection = useMemo((): Avatar[] => {
+    if (customAvatar) {
+      return [{
+        id: 'custom-glb',
+        name: 'Mi Avatar GLB',
+        image: '/vite.svg',
+        type: 'custom-glb',
+        rotationY: customAvatar.rotationY,
+        glb: customAvatar.glb,
+      }];
+    }
+    return [];
+  }, [customAvatar]);
+
+  const allAvatars = [...predefinedAvatars, ...customAvatars, ...customAvatarForSelection];
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden bg-black">
@@ -78,23 +97,43 @@ const AvatarSelection: React.FC<AvatarSelectionProps> = ({
       {/* Content */}
       <div className="flex-1 relative z-10 px-6 pb-6">
         <div className="max-w-6xl mx-auto">
-          {/* Custom Avatar Creation Card */}
-          <div className="mb-8">
+          {/* Action Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Custom Avatar Generation Card */}
             <button
               onClick={onCreateCustomAvatar}
               className="group relative w-full bg-gray-900/30 backdrop-blur-sm border-2 border-dashed border-gray-700/50 rounded-3xl p-8 hover:border-gray-600/50 transition-all duration-300 hover:scale-[1.02]"
             >
               <div className="flex flex-col items-center space-y-4">
                 <div className="w-16 h-16 bg-gradient-to-r from-gray-700 to-gray-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <Plus className="w-8 h-8 text-white" />
+                  <Sparkles className="w-8 h-8 text-white" />
                 </div>
                 <div className="text-center">
-                  <h3 className="text-xl font-semibold text-white mb-2 flex items-center justify-center space-x-2">
-                    <Sparkles className="w-5 h-5 text-gray-300" />
-                    <span>Generar Mi Propio Avatar</span>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    Generar Avatar con IA
                   </h3>
                   <p className="text-gray-400">
-                    Describe tu avatar ideal y nuestra IA lo creará para ti
+                    Describe tu avatar y nuestra IA lo creará para ti
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            {/* Custom GLB Uploader Card */}
+            <button
+              onClick={onUploadCustomAvatar}
+              className="group relative w-full bg-gray-900/30 backdrop-blur-sm border-2 border-dashed border-gray-700/50 rounded-3xl p-8 hover:border-gray-600/50 transition-all duration-300 hover:scale-[1.02]"
+            >
+              <div className="flex flex-col items-center space-y-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-700 to-indigo-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <UserCheck className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    Subir Avatar .glb
+                  </h3>
+                  <p className="text-gray-400">
+                    Importa tu propio modelo 3D personalizado
                   </p>
                 </div>
               </div>
@@ -102,7 +141,9 @@ const AvatarSelection: React.FC<AvatarSelectionProps> = ({
           </div>
 
           {/* Avatar Grid */}
+          <h2 className="text-2xl font-semibold text-white mb-4">O selecciona uno predefinido</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {isLoading && <p>Cargando avatar personalizado...</p>}
             {allAvatars.map((avatar) => (
               <div key={avatar.id} className="group cursor-pointer" onClick={() => onAvatarSelect(avatar)}>
                 <div className="relative bg-gray-900/30 backdrop-blur-sm rounded-2xl p-4 border border-gray-800/50 hover:border-gray-700/50 transition-all duration-300 hover:scale-105">
@@ -118,7 +159,13 @@ const AvatarSelection: React.FC<AvatarSelectionProps> = ({
                     {avatar.type === 'custom' && (
                       <div className="flex items-center justify-center space-x-1">
                         <Sparkles className="w-3 h-3 text-gray-300" />
-                        <span className="text-xs text-gray-300">Personalizado</span>
+                        <span className="text-xs text-gray-300">Personalizado IA</span>
+                      </div>
+                    )}
+                    {avatar.type === 'custom-glb' && (
+                      <div className="flex items-center justify-center space-x-1">
+                        <UserCheck className="w-3 h-3 text-blue-400" />
+                        <span className="text-xs text-blue-400">Personalizado GLB</span>
                       </div>
                     )}
                   </div>

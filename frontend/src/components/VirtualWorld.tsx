@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Users, Settings } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Sky } from '@react-three/drei';
@@ -19,7 +19,14 @@ const VirtualWorld: React.FC<Props> = ({ selectedAvatar, onBack }) => {
   const [isChatOpen, setIsChatOpen] = useState(true);
   const [animationNames, setAnimationNames] = useState<string[]>([]);
   const [currentAnimation, setCurrentAnimation] = useState('');
-  const avatarModelUrl = '/models/Walking.glb';
+
+  const avatarModelUrl = useMemo(() => {
+    if (selectedAvatar?.type === 'custom-glb' && selectedAvatar.glb) {
+      return URL.createObjectURL(selectedAvatar.glb);
+    }
+    return '/models/Walking.glb';
+  }, [selectedAvatar]);
+
   const onlineUsers = 47;
 
   useEffect(() => {
@@ -57,6 +64,8 @@ const VirtualWorld: React.FC<Props> = ({ selectedAvatar, onBack }) => {
               url={avatarModelUrl}
               animation={currentAnimation}
               onAnimations={setAnimationNames}
+              rotationY={selectedAvatar.rotationY}
+              normalizeScale={selectedAvatar.type === 'custom-glb'}
             />
           )}
           <OrbitControls target={[0, 1, 0]} />

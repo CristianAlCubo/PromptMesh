@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Wand2, Loader2, Check } from 'lucide-react';
 import { useGenerateImages } from '../hooks/txt2img';
+import type { AvatarGenerationData } from '../App';
 
 interface AvatarGenerationProps {
-  onAvatarGenerated: (description: string, selectedImage: string) => void;
+  onGenerate3D: (data: AvatarGenerationData) => void;
   onBack: () => void;
 }
 
-const AvatarGeneration: React.FC<AvatarGenerationProps> = ({ onAvatarGenerated, onBack }) => {
+const AvatarGeneration: React.FC<AvatarGenerationProps> = ({ onGenerate3D, onBack }) => {
   const [description, setDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
@@ -32,7 +33,7 @@ const AvatarGeneration: React.FC<AvatarGenerationProps> = ({ onAvatarGenerated, 
 
   const handleGenerateAvatar3D = async () => {
     if (selectedImageIndex !== null) {
-      onAvatarGenerated(description, generatedImages[selectedImageIndex]);
+      onGenerate3D({ description, selectedImage: generatedImages[selectedImageIndex] });
     }
   };
 

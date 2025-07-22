@@ -4,121 +4,118 @@ import AvatarSelection from './components/AvatarSelection';
 import AvatarGeneration from './components/AvatarGeneration';
 import Avatar3DPreview from './components/Avatar3DPreview';
 import VirtualWorld from './components/VirtualWorld';
-import { useGenerateMesh } from './hooks/img2mesh';
+import { CustomAvatarUploader } from './components/CustomAvatarUploader';
 
-export type AppState = 'landing' | 'avatar-selection' | 'avatar-generation' | 'avatar-preview' | 'virtual-world';
-
-export interface Avatar {
+export type Avatar = {
   id: string;
   name: string;
   image: string;
-  type: 'predefined' | 'custom';
-  description?: string;
-}
+  type: 'predefined' | 'custom' | 'custom-glb';
+  rotationY?: number;
+  glb?: Blob;
+};
+
+export type AvatarGenerationData = {
+  description: string;
+  selectedImage: string;
+};
 
 function App() {
-  const [currentState, setCurrentState] = useState<AppState>('landing');
+  const [currentView, setCurrentView] = useState('landing');
   const [selectedAvatar, setSelectedAvatar] = useState<Avatar | null>(null);
   const [customAvatars, setCustomAvatars] = useState<Avatar[]>([]);
-  const [generatedAvatarData, setGeneratedAvatarData] = useState<{
-    description: string;
-    selectedImage: string;
-  } | null>(null);
-  const { mutate: generateMesh, data: meshUrl, isPending: meshIsLoading } = useGenerateMesh();
-
-  const handleStartClick = () => {
-    setCurrentState('avatar-selection');
-  };
+  const [avatarGenData, setAvatarGenData] = useState<AvatarGenerationData | null>(null);
+  const [meshUrl, setMeshUrl] = useState<string | null>(null);
+  const [meshIsLoading, setMeshIsLoading] = useState(false);
 
   const handleAvatarSelect = (avatar: Avatar) => {
     setSelectedAvatar(avatar);
-    setCurrentState('virtual-world');
+    setCurrentView('virtualWorld');
   };
 
   const handleCreateCustomAvatar = () => {
-    setCurrentState('avatar-generation');
-  };
-
-  const handleAvatarGenerated = async (description: string, selectedImage: string) => {
-    setGeneratedAvatarData({ description, selectedImage });
-    setCurrentState('avatar-preview');
-    const imgUrl = selectedImage;
-
-    // Generar blob de la imagen
-    const imgBlob = await fetch(imgUrl).then(res => res.blob());
-    generateMesh(imgBlob);
-  };
-
-  const handleAvatarConfirmed = () => {
-    if (generatedAvatarData) {
-      const newAvatar: Avatar = {
-        id: `custom-${Date.now()}`,
-        name: 'Mi Avatar Personalizado',
-        image: generatedAvatarData.selectedImage,
-        type: 'custom',
-        description: generatedAvatarData.description
-      };
-      setCustomAvatars(prev => [...prev, newAvatar]);
-      setCurrentState('avatar-selection');
-    }
+    setCurrentView('avatarGeneration');
   };
 
   const handleBackToSelection = () => {
-    setCurrentState('avatar-selection');
+    setAvatarGenData(null);
+    setMeshUrl(null);
+    setCurrentView('avatarSelection');
+  };
+
+  const handleGenerate3D = (data: AvatarGenerationData) => {
+    setAvatarGenData(data);
+    setMeshIsLoading(true);
+
+    setTimeout(() => {
+      setMeshUrl('/models/Walking.glb');
+      setMeshIsLoading(false);
+    }, 2000);
+
+    setCurrentView('avatar3DPreview');
+  };
+
+  const handleConfirmAvatar = () => {
+    if (avatarGenData && meshUrl) {
+      const newAvatar: Avatar = {
+        id: `custom-${Date.now()}`,
+        name: avatarGenData.description.substring(0, 15),
+        image: avatarGenData.selectedImage,
+        type: 'custom'
+      };
+      setCustomAvatars([...customAvatars, newAvatar]);
+      handleBackToSelection();
+    }
   };
 
   const handleBackToLanding = () => {
-    setCurrentState('landing');
-    setSelectedAvatar(null);
+    setCurrentView('landing');
   };
 
-  const renderCurrentState = () => {
-    switch (currentState) {
+  const handleEnterApp = () => {
+    setCurrentView('avatarSelection');
+  };
+
+  const handleUploadCustomAvatar = () => {
+    setCurrentView('customAvatarUploader');
+  };
+
+  const renderContent = () => {
+    switch (currentView) {
       case 'landing':
-        return <LandingPage onStartClick={handleStartClick} />;
-      case 'avatar-selection':
+        return <LandingPage onEnter={handleEnterApp} />;
+      case 'avatarSelection':
         return (
           <AvatarSelection
             onAvatarSelect={handleAvatarSelect}
             onCreateCustomAvatar={handleCreateCustomAvatar}
+            onUploadCustomAvatar={handleUploadCustomAvatar}
             customAvatars={customAvatars}
             onBackToLanding={handleBackToLanding}
           />
         );
-      case 'avatar-generation':
-        return (
-          <AvatarGeneration
-            onAvatarGenerated={handleAvatarGenerated}
-            onBack={handleBackToSelection}
-          />
-        );
-      case 'avatar-preview':
+      case 'avatarGeneration':
+        return <AvatarGeneration onGenerate3D={handleGenerate3D} onBack={handleBackToSelection} />;
+      case 'avatar3DPreview':
         return (
           <Avatar3DPreview
-            avatarData={generatedAvatarData}
-            onConfirm={handleAvatarConfirmed}
-            onBack={() => setCurrentState('avatar-generation')}
-            meshUrl={meshUrl || null}
+            avatarData={avatarGenData}
+            onConfirm={handleConfirmAvatar}
+            onBack={handleBackToSelection}
+            meshUrl={meshUrl}
             meshIsLoading={meshIsLoading}
           />
         );
-      case 'virtual-world':
-        return (
-          <VirtualWorld
-            selectedAvatar={selectedAvatar}
-            onBack={handleBackToSelection}
-          />
-        );
+      case 'virtualWorld':
+        return <VirtualWorld selectedAvatar={selectedAvatar} onBack={handleBackToSelection} />;
+      case 'customAvatarUploader':
+        return <CustomAvatarUploader onBack={handleBackToSelection} />;
       default:
-        return <LandingPage onStartClick={handleStartClick} />;
+        return <LandingPage onEnter={handleEnterApp} />;
     }
   };
 
-  return (
-    <div className="min-h-screen bg-black">
-      {renderCurrentState()}
-    </div>
-  );
+  return <div className="bg-black">{renderContent()}</div>;
 }
 
 export default App;
