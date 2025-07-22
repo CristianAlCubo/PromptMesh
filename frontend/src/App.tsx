@@ -5,6 +5,8 @@ import AvatarGeneration from './components/AvatarGeneration';
 import Avatar3DPreview from './components/Avatar3DPreview';
 import VirtualWorld from './components/VirtualWorld';
 import { CustomAvatarUploader } from './components/CustomAvatarUploader';
+import "./global.css"
+
 
 export type Avatar = {
   id: string;
