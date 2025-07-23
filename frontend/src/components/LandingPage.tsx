@@ -1,11 +1,13 @@
 import type React from "react"
-import { useRef, useMemo } from "react"
+import { useRef, useMemo, useState, useEffect, useCallback } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
 import { Points, PointMaterial } from "@react-three/drei"
 import type * as THREE from "three"
 
 interface LandingPageProps {
-  onEnter: () => void
+  onEnter: () => void;
+  onMount: () => void; // Nueva prop para indicar que se ha montado y está listo para la entrada
+  isReturning: boolean; // Nueva prop para indicar si se está regresando a esta página
 }
 
 // Componente de partículas flotantes
@@ -55,9 +57,41 @@ function AnimatedGeometry() {
   )
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onEnter, onMount, isReturning }) => {
+  const [hasEntered, setHasEntered] = useState(false); // Controla la entrada inicial/regreso
+  const [isExiting, setIsExiting] = useState(false); // Controla la salida
+
+  // Efecto para la animación de entrada al montar o al regresar
+  useEffect(() => {
+    // Si la página se está montando por primera vez o estamos regresando a ella, animar la entrada
+    if (isReturning || !hasEntered) {
+      const timer = setTimeout(() => {
+        setHasEntered(true);
+        // Llama a onMount solo si es la primera carga o si necesitas notificar al padre
+        if (isReturning) {
+          // Si estamos regresando, resetea el estado de retorno en el padre si es necesario
+          // onMount(); // Podrías tener una función en App.tsx para resetear isReturning
+        }
+      }, 100); // Pequeño retraso para la transición de entrada
+
+      return () => clearTimeout(timer);
+    }
+  }, [isReturning, hasEntered, onMount]); // Dependencias para re-ejecutar el efecto
+
+  const handleEnterClick = useCallback(() => {
+    setIsExiting(true); // Activa la animación de salida
+    setTimeout(() => {
+      onEnter(); // Llama a onEnter después de la duración de la transición
+    }, 1000); // Ajusta este tiempo para que coincida con la duración de tu transición CSS (1000ms = 1s)
+  }, [onEnter]);
+
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-black">
+    // Agrega clases de transición al contenedor principal
+    <div
+      className={`relative h-screen w-full overflow-hidden bg-black transition-opacity duration-1000 ease-in-out ${
+        (hasEntered && !isExiting) ? "opacity-100" : "opacity-0"
+      }`}
+    >
       {/* Canvas de Three.js para efectos 3D */}
       <div className="absolute inset-0 z-0">
         <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
@@ -86,9 +120,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
           className="w-full h-full"
           style={{
             backgroundImage: `
-            linear-gradient(rgba(0,255,255,0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,255,255,0.1) 1px, transparent 1px)
-          `,
+              linear-gradient(rgba(0,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(0,255,255,0.1) 1px, transparent 1px)
+            `,
             backgroundSize: "50px 50px",
           }}
         ></div>
@@ -127,7 +161,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
         {/* Botón futurista */}
         <div className="relative group transition-transform duration-300 hover:scale-105">
           <button
-            onClick={onEnter}
+            onClick={handleEnterClick}
             className="relative px-12 py-4 text-lg font-bold text-white bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full border border-cyan-400/50 shadow-[0_0_30px_rgba(0,255,255,0.3)] transition-all duration-300 group-hover:shadow-[0_0_50px_rgba(0,255,255,0.6)] active:scale-95"
           >
             <span className="relative z-10">Entrar al Multiverso</span>

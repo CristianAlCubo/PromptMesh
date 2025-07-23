@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react'; // Importa useCallback
 import { ArrowLeft, Sparkles, UserCheck } from 'lucide-react';
 import type { Avatar } from '../App';
 import { useCustomAvatar } from '../hooks/useCustomAvatar';
@@ -19,6 +19,26 @@ const AvatarSelection: React.FC<AvatarSelectionProps> = ({
   onUploadCustomAvatar
 }) => {
   const { avatar: customAvatar, isLoading } = useCustomAvatar();
+  const [hasEntered, setHasEntered] = useState(false);
+  const [isExiting, setIsExiting] = useState(false); // Nuevo estado para controlar la animación de salida
+
+  // Efecto para la animación de entrada
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHasEntered(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Función para manejar el clic en el botón "Volver"
+  const handleBack = useCallback(() => {
+    setIsExiting(true); // Activa la animación de salida
+    // El tiempo debe ser igual o un poco mayor que la duración de la transición de salida
+    setTimeout(() => {
+      onBackToLanding(); // Llama a la función para volver a la LandingPage
+    }, 700); // Coincide con la duración de la transición CSS (700ms)
+  }, [onBackToLanding]);
 
   const predefinedAvatars: Avatar[] = [
     {
@@ -80,22 +100,27 @@ const AvatarSelection: React.FC<AvatarSelectionProps> = ({
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900"></div>
 
-      {/* Header */}
-      <div className="relative z-10 flex items-center justify-between p-6">
-        <button
-          onClick={onBackToLanding}
-          className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors duration-200"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Volver</span>
-        </button>
+      {/* Contenedor principal del contenido con animación de entrada y salida */}
+      <div
+        className={`flex-1 relative z-10 px-6 pb-6 transition-all duration-700 ease-out ${
+          hasEntered && !isExiting ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6">
+          <button
+            onClick={handleBack} // Usar la nueva función handleBack
+            className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors duration-200"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Volver</span>
+          </button>
 
-        <h1 className="text-2xl font-bold text-white">Selecciona tu Avatar</h1>
-        <div className="w-20"></div>
-      </div>
+          <h1 className="text-2xl font-bold text-white">Selecciona tu Avatar</h1>
+          <div className="w-20"></div>
+        </div>
 
-      {/* Content */}
-      <div className="flex-1 relative z-10 px-6 pb-6">
+        {/* Content */}
         <div className="max-w-6xl mx-auto">
           {/* Action Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -143,7 +168,7 @@ const AvatarSelection: React.FC<AvatarSelectionProps> = ({
           {/* Avatar Grid */}
           <h2 className="text-2xl font-semibold text-white mb-4">O selecciona uno predefinido</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {isLoading && <p>Cargando avatar personalizado...</p>}
+            {isLoading && <p className="text-gray-400 col-span-full text-center">Cargando avatar personalizado...</p>}
             {allAvatars.map((avatar) => (
               <div key={avatar.id} className="group cursor-pointer" onClick={() => onAvatarSelect(avatar)}>
                 <div className="relative bg-gray-900/30 backdrop-blur-sm rounded-2xl p-4 border border-gray-800/50 hover:border-gray-700/50 transition-all duration-300 hover:scale-105">
