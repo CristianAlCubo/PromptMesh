@@ -57,11 +57,16 @@ export const AvatarGLB: React.FC<AvatarGLBProps> = ({
     }, [rotationY]);
 
     useEffect(() => {
-        if (names.length > 0) onAnimations(names);
+        onAnimations(names);
     }, [names, onAnimations]);
 
     useEffect(() => {
-        const action = actions[animation];
+        let animToPlay = animation;
+        if (animation === 'Idle' && !actions['Idle'] && names.length > 0) {
+            animToPlay = names[0];
+        }
+
+        const action = actions[animToPlay];
         if (!action) return;
 
         action.reset().fadeIn(0.2).play();
@@ -69,9 +74,11 @@ export const AvatarGLB: React.FC<AvatarGLBProps> = ({
         action.loop = THREE.LoopRepeat;
 
         return () => {
-            action.fadeOut(0.2);
+            if (action) {
+                action.fadeOut(0.2);
+            }
         };
-    }, [actions, animation]);
+    }, [actions, animation, names]);
 
     return (
         <group ref={group}>

@@ -92,6 +92,8 @@ export function Park() {
     )
 }
 
+export { Ground };
+
 export default function ParkScene() {
     return (
         <Canvas

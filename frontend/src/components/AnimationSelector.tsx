@@ -1,66 +1,86 @@
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger
-} from "@/components/ui/popover";
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandItem,
-} from "@/components/ui/command";
-import { ChevronDown, ListFilter } from "lucide-react";
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-interface Props {
-    animationNames: string[];
-    current: string;
-    setCurrent: (name: string) => void;
+export interface AnimationItem {
+  name: string;
+  naturalName: string;
 }
 
-export const AnimationSelector: React.FC<Props> = ({ animationNames, current, setCurrent }) => {
-    const [open, setOpen] = useState(false);
+interface AnimationSelectorProps {
+  animationNames: AnimationItem[];
+  current: string;
+  setCurrent: (name: string) => void;
+}
 
-    const handleSelect = (name: string) => {
-        setCurrent(name);
-        setOpen(false);
-    };
+const toNaturalName = (name: string): string => {
+  const lowerName = name.toLowerCase();
+  
+  const mapping: { [key: string]: string[] } = {
+    'Caminar': ['walk', 'walking'],
+    'Correr': ['run', 'running'],
+    'Saltar': ['jump', 'jumping'],
+    'Reposo': ['idle', 't-pose', 'tpose', 'static', 'rest'],
+    'Bailar': ['dance', 'dancing', 'samba'],
+    'Atrás': ['backward'],
+    'Izquierda': ['left'],
+    'Derecha': ['right'],
+  };
 
-    return (
-        <div className="absolute left-6 top-1/2 -translate-y-1/2 z-50">
-            <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                    <Button variant="secondary" className="rounded-xl px-4 shadow-lg">
-                        <ListFilter className="mr-2 h-4 w-4" />
-                        {current ? (
-                            <span className="capitalize">{current}</span>
-                        ) : (
-                            <span>Seleccionar animación</span>
-                        )}
-                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-0 shadow-xl border border-gray-700/50 bg-background backdrop-blur-sm">
-                    <div className="px-4 py-3 border-b border-border">
-                        <h3 className="text-sm font-medium text-muted-foreground">Animaciones disponibles</h3>
-                    </div>
-                    <Command>
-                        <CommandEmpty>No hay animaciones</CommandEmpty>
-                        <CommandGroup>
-                            {animationNames.map((name) => (
-                                <CommandItem
-                                    key={name}
-                                    onSelect={() => handleSelect(name)}
-                                    className="capitalize"
-                                >
-                                    {name}
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    </Command>
-                </PopoverContent>
-            </Popover>
-        </div>
-    );
+  for (const natural in mapping) {
+    if (mapping[natural].some(keyword => lowerName.includes(keyword))) {
+      return natural;
+    }
+  }
+
+  // If no mapping found, clean up the name itself.
+  let cleanName = name.split('|').pop() || name; 
+  cleanName = cleanName.replace(/_/g, ' ');
+  cleanName = cleanName.replace(/([a-z])([A-Z])/g, '$1 $2');
+  
+  if (cleanName.toLowerCase() !== name.toLowerCase() && cleanName.length > 1) {
+    return cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+  }
+  
+  if (lowerName.includes('armature') || lowerName.includes('mixamo')) {
+    return 'Animación Genérica';
+  }
+  
+  return name;
 };
+
+
+export const AnimationSelector: React.FC<AnimationSelectorProps> = ({ animationNames, current, setCurrent }) => {
+  return (
+    <div className="absolute bottom-4 left-4 p-2 bg-gray-900/60 rounded-lg text-white max-w-xs pointer-events-auto">
+      <h3 className="text-sm font-bold mb-2 px-2">Animaciones</h3>
+      <div className="space-y-1 max-h-48 overflow-y-auto">
+        <AnimatePresence>
+          {animationNames.length > 0 ? (
+            animationNames.map(({ name, naturalName }) => (
+              <motion.button
+                key={name}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => setCurrent(name)}
+                className={`w-full text-left px-3 py-1.5 text-sm rounded-md transition-colors ${
+                  current === name ? 'bg-blue-600' : 'hover:bg-gray-700/80'
+                }`}
+              >
+                {naturalName}
+              </motion.button>
+            ))
+          ) : (
+            <div className="px-3 py-1.5 text-sm text-gray-400">
+              Animaciones no disponibles
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
+export { toNaturalName };
+
