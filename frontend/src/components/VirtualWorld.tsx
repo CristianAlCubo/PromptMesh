@@ -21,8 +21,47 @@ const VirtualWorld: React.FC<Props> = ({ selectedAvatar, onBack }) => {
   const [isChatOpen, setIsChatOpen] = React.useState(true);
   const [animationNames, setAnimationNames] = useState<AnimationItem[]>([]);
   const [currentAnimation, setCurrentAnimation] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const onlineUsers = 47;
+
+  useEffect(() => {
+    if (selectedAvatar) {
+      if (selectedAvatar.type === 'custom-glb' && selectedAvatar.glb) {
+        const url = URL.createObjectURL(selectedAvatar.glb);
+        setAvatarUrl(url);
+        return () => URL.revokeObjectURL(url);
+      } else if (selectedAvatar.type === 'predefined') {
+        // Asignar un modelo predeterminado basado en el avatar seleccionado
+        // Esto es un ejemplo, ajusta las rutas según tus archivos
+        switch (selectedAvatar.id) {
+          case 'preset-1':
+            setAvatarUrl('/models/esqueleto.glb');
+            break;
+          case 'preset-2':
+            setAvatarUrl('/models/gato.glb');
+            break;
+          case 'preset-3':
+            setAvatarUrl('/models/marciano.glb');
+            break;
+          case 'preset-4':
+            setAvatarUrl('/models/ogro.glb');
+            break;
+          case 'preset-5':
+            setAvatarUrl('/models/ogrosombrero.glb');
+            break;
+          case 'preset-6':
+            setAvatarUrl('/models/orco.glb');
+            break;
+          default:
+            setAvatarUrl('/models/Walking.glb');
+        }
+      } else {
+        // Fallback para avatares generados por IA u otros casos
+        setAvatarUrl('/models/Walking.glb');
+      }
+    }
+  }, [selectedAvatar]);
 
   const handleSetAnimationNames = (names: string[]) => {
     const naturalNames = names.map(name => ({ name, naturalName: toNaturalName(name) }));
@@ -78,10 +117,11 @@ const VirtualWorld: React.FC<Props> = ({ selectedAvatar, onBack }) => {
               <RigidBody type="fixed">
                 <CuboidCollider args={[25, 0.1, 25]} position={[0, -0.1, 0]} />
               </RigidBody>
-              <PlayerController 
-                selectedAvatar={selectedAvatar} 
-                animation={currentAnimation} 
-                onAnimations={handleSetAnimationNames} 
+              <PlayerController
+                avatarUrl={avatarUrl}
+                selectedAvatar={selectedAvatar}
+                animation={currentAnimation}
+                onAnimations={handleSetAnimationNames}
               />
             </Physics>
             <Park />

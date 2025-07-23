@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import { useKeyboardControls, OrbitControls } from "@react-three/drei";
 import { CapsuleCollider } from "@react-three/rapier";
 import * as THREE from "three";
-import { useRef, useMemo, useState } from "react";
+import { useRef, useState } from "react";
 import { AvatarGLB } from "./AvatarGLB";
 import type { Avatar } from '../App';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
@@ -12,12 +12,13 @@ const MOVE_SPEED = 5;
 const JUMP_FORCE = 10;
 
 interface PlayerControllerProps {
+    avatarUrl: string | null;
     selectedAvatar: Avatar | null;
     animation: string;
     onAnimations: (names: string[]) => void;
 }
 
-export function PlayerController({ selectedAvatar, animation, onAnimations }: PlayerControllerProps) {
+export function PlayerController({ avatarUrl, selectedAvatar, animation, onAnimations }: PlayerControllerProps) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const body = useRef<any>(null);
     const character = useRef<THREE.Group>(null);
@@ -28,10 +29,6 @@ export function PlayerController({ selectedAvatar, animation, onAnimations }: Pl
     const [, getKeys] = useKeyboardControls();
     const { rapier, world } = useRapier();
     
-    const avatarModelUrl = useMemo(() => selectedAvatar?.type === 'custom-glb' && selectedAvatar.glb
-        ? URL.createObjectURL(selectedAvatar.glb)
-        : '/models/Walking.glb', [selectedAvatar]);
-
     useFrame((state, delta) => {
         if (!body.current || !character.current || !controls.current) return;
 
@@ -109,9 +106,9 @@ export function PlayerController({ selectedAvatar, animation, onAnimations }: Pl
             <RigidBody ref={body} colliders={false} mass={1} type="dynamic" enabledRotations={[false, false, false]}>
                 <CapsuleCollider args={[0.7, 0.6]} position={[0, 1.3, 0]} />
                 <group ref={character}>
-                    {selectedAvatar && (
+                    {avatarUrl && (
                         <AvatarGLB
-                            url={avatarModelUrl}
+                            url={avatarUrl}
                             animation={animationState}
                             onAnimations={(names) => {
                                 if (!names.includes('Idle')) {
@@ -119,7 +116,7 @@ export function PlayerController({ selectedAvatar, animation, onAnimations }: Pl
                                 }
                                 onAnimations(names);
                             }}
-                            normalizeScale={selectedAvatar.type === 'custom-glb'}
+                            normalizeScale={selectedAvatar?.type === 'custom-glb'}
                         />
                     )}
                 </group>
