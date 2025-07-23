@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react'; // Importa useCallback
 import { ArrowLeft, Wand2, Loader2, Check } from 'lucide-react';
 import { useGenerateImages } from '../hooks/txt2img';
 import type { AvatarGenerationData } from '../App';
@@ -6,6 +6,8 @@ import type { AvatarGenerationData } from '../App';
 interface AvatarGenerationProps {
   onGenerate3D: (data: AvatarGenerationData) => void;
   onBack: () => void;
+  // Opcional: una prop para indicar si se regresa, similar a LandingPage
+  // isReturning?: boolean;
 }
 
 const AvatarGeneration: React.FC<AvatarGenerationProps> = ({ onGenerate3D, onBack }) => {
@@ -14,7 +16,28 @@ const AvatarGeneration: React.FC<AvatarGenerationProps> = ({ onGenerate3D, onBac
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
+  const [hasEntered, setHasEntered] = useState(false); // Nuevo estado para la animación de entrada
+  const [isExiting, setIsExiting] = useState(false);   // Nuevo estado para la animación de salida
+
   const { mutate, data } = useGenerateImages();
+
+  // Efecto para la animación de entrada
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHasEntered(true);
+    }, 100); // Pequeño retraso para que la transición sea visible al entrar
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Función para manejar el clic en el botón "Volver"
+  const handleBackClick = useCallback(() => {
+    setIsExiting(true); // Activa la animación de salida
+    // El tiempo debe ser igual o un poco mayor que la duración de la transición de salida
+    setTimeout(() => {
+      onBack(); // Llama a la función para volver a la página anterior
+    }, 700); // Coincide con la duración de la transición CSS (700ms)
+  }, [onBack]);
 
   const generateAvatars = async () => {
     setIsGenerating(true);
@@ -33,6 +56,8 @@ const AvatarGeneration: React.FC<AvatarGenerationProps> = ({ onGenerate3D, onBac
 
   const handleGenerateAvatar3D = async () => {
     if (selectedImageIndex !== null) {
+      // Si la siguiente página también tiene animación de entrada,
+      // podrías activar una transición de salida aquí antes de llamar a onGenerate3D
       onGenerate3D({ description, selectedImage: generatedImages[selectedImageIndex] });
     }
   };
@@ -49,22 +74,27 @@ const AvatarGeneration: React.FC<AvatarGenerationProps> = ({ onGenerate3D, onBac
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900"></div>
 
-      {/* Header */}
-      <div className="relative z-10 flex items-center justify-between p-6">
-        <button
-          onClick={onBack}
-          className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors duration-200"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Volver</span>
-        </button>
+      {/* Contenedor principal del contenido con animación de entrada y salida */}
+      <div
+        className={`flex-1 relative z-10 px-6 pb-6 transition-all duration-700 ease-out ${
+          hasEntered && !isExiting ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+      >
+        {/* Header */}
+        <div className="relative z-10 flex items-center justify-between p-6">
+          <button
+            onClick={handleBackClick} // Usar la nueva función handleBackClick
+            className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors duration-200"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Volver</span>
+          </button>
 
-        <h1 className="text-2xl font-bold text-white">Crear Avatar con IA</h1>
-        <div className="w-20"></div>
-      </div>
+          <h1 className="text-2xl font-bold text-white">Crear Avatar con IA</h1>
+          <div className="w-20"></div>
+        </div>
 
-      {/* Content */}
-      <div className="flex-1 relative z-10 px-6 pb-6">
+        {/* Content */}
         <div className="max-w-4xl mx-auto">
           {/* Description Input */}
           <div className="bg-gray-900/30 backdrop-blur-sm rounded-3xl p-8 border border-gray-800/50 mb-8">
