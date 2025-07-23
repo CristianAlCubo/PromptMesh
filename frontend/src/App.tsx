@@ -15,6 +15,7 @@ export type Avatar = {
   type: 'predefined' | 'custom' | 'custom-glb';
   rotationY?: number;
   glb?: Blob;
+  modelUrl?: string;
 };
 
 export type AvatarGenerationData = {
@@ -63,7 +64,8 @@ function App() {
         id: `custom-${Date.now()}`,
         name: avatarGenData.description.substring(0, 15),
         image: avatarGenData.selectedImage,
-        type: 'custom'
+        type: 'custom',
+        modelUrl: meshUrl,
       };
       setCustomAvatars([...customAvatars, newAvatar]);
       handleBackToSelection();

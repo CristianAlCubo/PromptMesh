@@ -31,6 +31,8 @@ const VirtualWorld: React.FC<Props> = ({ selectedAvatar, onBack }) => {
         const url = URL.createObjectURL(selectedAvatar.glb);
         setAvatarUrl(url);
         return () => URL.revokeObjectURL(url);
+      } else if (selectedAvatar.type === 'custom' && selectedAvatar.modelUrl) {
+        setAvatarUrl(selectedAvatar.modelUrl);
       } else if (selectedAvatar.type === 'predefined') {
         // Asignar un modelo predeterminado basado en el avatar seleccionado
         // Esto es un ejemplo, ajusta las rutas según tus archivos
